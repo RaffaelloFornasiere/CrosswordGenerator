@@ -16,9 +16,51 @@ public class CrosswordGenerator {
         keyWords.stream().map(KeyWord::getWord).forEach(System.out::println);
         var confs = setMatches(keyWords);
 
+        Pair<Integer, Integer> matrixSize;
+        do {
+            for (int i = 0; i < keyWords.size(); i++) {
+                confs.get(i).setOrientation(i < keyWords.size() / 2 ? Orientation.VERTICAL : Orientation.HORIZONTAL);
+            }
+            matrixSize = computeMatrixSize(confs);
+        } while (!isFeasible(confs, matrixSize));
+
+        getSolution(confs, matrixSize).forEach(i -> {
+                    i.forEach(System.out::print);
+                    System.out.println();
+                }
+        );
 
 
+    }
 
+    static ArrayList<ArrayList<Character>> getSolution(ArrayList<WordConf> words, Pair<Integer, Integer> matrixSize) {
+        ArrayList<ArrayList<Character>> matrix = new ArrayList<>(
+                Collections.nCopies(matrixSize.getSecond(), new ArrayList<>(
+                        Collections.nCopies(matrixSize.getFirst(), null))
+                ));
+        for (int i = 0; i < words.size(); i++) {
+            WordConf word = words.get(i);
+            char[] ch = word.getWord().toCharArray();
+            if (word.isHorizontal())
+                for (int j = 0; j < word.getWord().length(); j++) {
+                    if (matrix.get(i).get(j) == null)
+                        matrix.get(i).set(j, ch[j]);
+                    else
+                        return null;
+                }
+            else
+                for (int j = 0; j < word.getWord().length(); j++) {
+                    if (matrix.get(j).get(i) == null)
+                        matrix.get(j).set(i, ch[j]);
+                    else
+                        return null;
+                }
+        }
+        return matrix;
+    }
+
+    static boolean isFeasible(ArrayList<WordConf> words, Pair<Integer, Integer> matrixSize) {
+        return getSolution(words, matrixSize) != null;
     }
 
 
