@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class CrosswordGenerator {
@@ -14,7 +15,9 @@ public class CrosswordGenerator {
         Gson gson = new Gson();
         ArrayList<KeyWord> keyWords = new ArrayList<>(Arrays.stream(gson.fromJson(new FileReader("src/main/resources/words.json"), KeyWord[].class)).toList());
         keyWords.stream().map(KeyWord::getWord).forEach(System.out::println);
-        var confs = setMatches(keyWords);
+        var confs = setMatches(keyWords.stream()
+                .map(i -> WordConf.builder().word(i.getWord()).build())
+                .collect(Collectors.toList()));
 
         Pair<Integer, Integer> matrixSize;
         do {
@@ -23,6 +26,7 @@ public class CrosswordGenerator {
             }
             matrixSize = computeMatrixSize(confs);
         } while (!isFeasible(confs, matrixSize));
+
 
         getSolution(confs, matrixSize).forEach(i -> {
                     i.forEach(System.out::print);
@@ -33,7 +37,8 @@ public class CrosswordGenerator {
 
     }
 
-    static ArrayList<ArrayList<Character>> getSolution(ArrayList<WordConf> words, Pair<Integer, Integer> matrixSize) {
+
+    static ArrayList<ArrayList<Character>> getSolution(List<WordConf> words, Pair<Integer, Integer> matrixSize) {
         ArrayList<ArrayList<Character>> matrix = new ArrayList<>(
                 Collections.nCopies(matrixSize.getSecond(), new ArrayList<>(
                         Collections.nCopies(matrixSize.getFirst(), null))
@@ -59,23 +64,21 @@ public class CrosswordGenerator {
         return matrix;
     }
 
-    static boolean isFeasible(ArrayList<WordConf> words, Pair<Integer, Integer> matrixSize) {
+    static boolean isFeasible(List<WordConf> words, Pair<Integer, Integer> matrixSize) {
         return getSolution(words, matrixSize) != null;
     }
 
 
-    static ArrayList<WordConf> setMatches(ArrayList<KeyWord> keyWords) {
-        ArrayList<WordConf> res = new ArrayList<>() {{
-            keyWords.forEach(keyWord ->
-                    add(WordConf.builder().word(keyWord.getWord()).build()));
-        }};
-        res.forEach(word -> res.forEach(word2 ->
+    static List<WordConf> setMatches(List<WordConf> keyWords) {
+        keyWords.forEach(word -> keyWords.forEach(word2 ->
         {
-            var match = findMatch(word, word2);
-            if (match != null)
-                word.getMatches().add(new Pair<>(word2, match.getFirst()));
+            if (!word.getOrientation().equals(word2.getOrientation())) {
+                var match = findMatch(word, word2);
+                if (match != null)
+                    word.getMatches().add(new Pair<>(word2, match.getFirst()));
+            }
         }));
-        return res;
+        return keyWords;
     }
 
     static Pair<Integer, Integer> findMatch(WordConf wc1, WordConf wc2) {
@@ -89,7 +92,7 @@ public class CrosswordGenerator {
     }
 
 
-    static Pair<Integer, Integer> computeMatrixSize(ArrayList<WordConf> words) {
+    static Pair<Integer, Integer> computeMatrixSize(List<WordConf> words) {
         WordConf word = words.get(0);
         word.setLine(new Line(0,
                 0,

@@ -17,10 +17,10 @@ import java.util.NoSuchElementException;
 public class WordConf {
     private String word;
     private Pair<WordConf, Integer> parent;
-    public ArrayList<Pair<WordConf, Integer>> matches;
-    Orientation orientation;
-    Line line;
-    Boolean visited;
+    private ArrayList<Pair<WordConf, Integer>> matches;
+    private Orientation orientation;
+    private Line line;
+    private Boolean visited;
 
     Integer getMatchI(WordConf wordConf){
         return matches.stream().filter(i -> i.getFirst().equals(wordConf)).map(Pair::getSecond).reduce((a, b) -> {
